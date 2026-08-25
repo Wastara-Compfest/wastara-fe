@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { ClipboardCheck, LayoutDashboard, ScanEye } from "lucide-react";
 
@@ -17,10 +18,15 @@ export function AppSidebar() {
 
   return (
     <aside className="flex h-full flex-col">
-      <Link href="/dashboard" className="mb-8 px-2">
-        <span className="text-[15px] font-semibold tracking-[-0.01em] text-heading">
-          Wastara
-        </span>
+      <Link href="/dashboard" className="flex gap-2 items-center mb-4 px-2">
+        <Image
+          src={"/logo-main.svg"}
+          alt="Wastara"
+          width={40}
+          height={40}
+          className="w-auto h-8 rounded-sm"
+        />
+        <span className="text-[18px] font-semibold tracking-[-0.01em] text-heading">Wastara</span>
       </Link>
 
       <nav className="flex flex-col gap-0.5">
