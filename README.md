@@ -1,36 +1,89 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Wastara Frontend — Operator Dashboard
 
-## Getting Started
+Next.js dashboard for **Wastara**, a garment-defect inspection system. Talks only to `wastara-be` (REST + WebSocket) — it never calls the model service (`wastara-model`) directly.
 
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+```text
+wastara-fe (Next.js)  ──REST + WebSocket──▶  wastara-be (Hono)  ──internal API──▶  wastara-model (FastAPI)
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Screens: live camera/video inspection, review queue (confirm/reject anomalies), defect table + detail, analytics.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Related repos
 
-## Learn More
+| Repo | Role |
+|------|------|
+| [wastara-be](https://github.com/Wastara-Compfest/wastara-be) | API this frontend talks to (defects, verification, camera proxy, WebSocket) |
+| [wastara-model](https://github.com/Wastara-Compfest/wastara-model) | Detection/tracking/defect pipeline (Python, called by `wastara-be`, not directly by this app) |
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Stack
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Tool | Role |
+|------|------|
+| Next.js 16 (App Router) | UI, routing |
+| React 19 | Components |
+| Tailwind CSS v4 | Styling |
+| sonner | Toast notifications |
+| recharts | Analytics charts |
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Setup without Docker
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Requires Node.js 22+ and a running `wastara-be` (see that repo's README).
+
+```bash
+npm install
+cp .env.example .env.local   # set NEXT_PUBLIC_API_URL to your wastara-be URL
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000).
+
+---
+
+## Setup with Docker
+
+```bash
+docker compose up --build
+```
+
+Builds a production Next.js image and serves it on `http://localhost:3000`. `NEXT_PUBLIC_API_URL` is baked in **at build time** (Next.js inlines `NEXT_PUBLIC_*` vars into the client bundle) — if `wastara-be` isn't on `localhost:8000`, set it before building:
+
+```bash
+NEXT_PUBLIC_API_URL=http://your-backend-host:8000 docker compose up --build
+```
+
+This repo's `docker-compose.yml` only runs the frontend — `wastara-be` (and its own Postgres) is a separate repo/compose stack, started independently.
+
+---
+
+## Environment variables
+
+| Variable | Default (`.env.example`) | Keterangan |
+|---|---|---|
+| `NEXT_PUBLIC_API_URL` | `http://localhost:8000` | Base URL of `wastara-be` (REST + derives the `/ws/live` WebSocket URL) |
+| `NEXT_PUBLIC_INSPECTION_SOURCE` | `webcam` | Default camera source sent to `/camera/start`; set to a video file path known to `wastara-model` to run without physical hardware |
+
+---
+
+## Scripts
+
+| Script | Fungsi |
+|---|---|
+| `npm run dev` | Dev server with hot-reload |
+| `npm run build` | Production build (also used by the Docker image) |
+| `npm start` | Serve a production build (non-Docker) |
+| `npm run lint` | ESLint |
+
+---
+
+## Key features
+
+- **Live view** — start/stop camera inspection, live annotated preview over WebSocket, plus an **upload-video** mock-data path: upload a clip, watch it run through the real detection pipeline (Uploading → Inspecting → toast on completion), no camera hardware required.
+- **Review queue** — confirm/reject pending anomalies detected from either the live camera or an uploaded video.
+- **Defect table & detail** — full history with evidence images, filters, and status.
+- All timestamps are rendered in **Asia/Jakarta (WIB)**.
