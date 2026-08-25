@@ -66,7 +66,7 @@ This repo's `docker-compose.yml` only runs the frontend — `wastara-be` (and it
 | Variable | Default (`.env.example`) | Keterangan |
 |---|---|---|
 | `NEXT_PUBLIC_API_URL` | `http://localhost:8000` | Base URL of `wastara-be` (REST + derives the `/ws/live` WebSocket URL) |
-| `NEXT_PUBLIC_INSPECTION_SOURCE` | `webcam` | Default camera source sent to `/camera/start`; set to a video file path known to `wastara-model` to run without physical hardware |
+| `NEXT_PUBLIC_INSPECTION_SOURCE` | `data/input/videos/demovid.mp4` | Default camera source sent to `/camera/start` — `webcam` for a real camera, or a video path (relative to `wastara-model`) to run without physical hardware |
 
 ---
 
