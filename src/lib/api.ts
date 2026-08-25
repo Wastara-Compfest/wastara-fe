@@ -140,6 +140,21 @@ export async function fetchVideoInspection(id: string) {
   return apiFetch<ApiVideoInspection>(`/video-inspections/${encodeURIComponent(id)}`);
 }
 
+const jakartaTimestampFormatter = new Intl.DateTimeFormat("sv-SE", {
+  timeZone: "Asia/Jakarta",
+  year: "numeric",
+  month: "2-digit",
+  day: "2-digit",
+  hour: "2-digit",
+  minute: "2-digit",
+  second: "2-digit",
+  hour12: false,
+});
+
+export function formatJakartaTimestamp(isoUtc: string): string {
+  return jakartaTimestampFormatter.format(new Date(isoUtc));
+}
+
 export function evidenceImageUrl(evidenceUrl: string | null) {
   if (!evidenceUrl) {
     return null;
@@ -153,7 +168,7 @@ export function evidenceImageUrl(evidenceUrl: string | null) {
 export function formatApiDefect(event: ApiDefectEvent) {
   return {
     id: event.id,
-    timestamp: event.created_at.replace("T", " ").slice(0, 19),
+    timestamp: formatJakartaTimestamp(event.created_at),
     anomalyScore: event.anomaly_score,
     status: event.status,
     defectType: event.defect_type,
@@ -162,7 +177,7 @@ export function formatApiDefect(event: ApiDefectEvent) {
     evidenceUrl: evidenceImageUrl(event.evidence_url),
     machineId: event.machine_id,
     verifiedAt: event.verified_at
-      ? event.verified_at.replace("T", " ").slice(0, 19)
+      ? formatJakartaTimestamp(event.verified_at)
       : null,
     verifiedBy: event.verified_by,
     rejectReason: event.reject_reason,
