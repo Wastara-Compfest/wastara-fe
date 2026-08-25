@@ -108,6 +108,38 @@ export async function stopCameraInspection() {
   });
 }
 
+export type VideoInspectionStatus = "queued" | "processing" | "done" | "failed";
+
+export type ApiVideoInspection = {
+  id: string;
+  status: VideoInspectionStatus;
+  filename: string;
+  machine_id: string;
+  created_at: string;
+  completed_at: string | null;
+  defect_count: number;
+  error_message: string | null;
+};
+
+export async function uploadVideoInspection(file: File, machineId = "LOOM-01") {
+  const form = new FormData();
+  form.append("file", file);
+  form.append("machine_id", machineId);
+  const res = await fetch(`${API_BASE}/video-inspections`, {
+    method: "POST",
+    body: form,
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(body || `API error ${res.status}`);
+  }
+  return res.json() as Promise<{ id: string; status: VideoInspectionStatus }>;
+}
+
+export async function fetchVideoInspection(id: string) {
+  return apiFetch<ApiVideoInspection>(`/video-inspections/${encodeURIComponent(id)}`);
+}
+
 export function evidenceImageUrl(evidenceUrl: string | null) {
   if (!evidenceUrl) {
     return null;

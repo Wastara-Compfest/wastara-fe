@@ -31,3 +31,10 @@ export type InspectionAlert = {
     status: "PENDING_REVIEW";
   };
 };
+
+export type InspectionCompleteMessage = {
+  type: "inspection_complete";
+  inspection_id: string;
+  status: "done" | "failed";
+  defect_count: number;
+};

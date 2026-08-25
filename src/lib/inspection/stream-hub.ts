@@ -1,14 +1,19 @@
-import type { InspectionAlert } from "@/lib/inspection/types";
+import type {
+  InspectionAlert,
+  InspectionCompleteMessage,
+} from "@/lib/inspection/types";
 
 import { inspectionWsUrl } from "./session-api";
 
 type FrameHandler = (blob: Blob) => void;
 type AlertHandler = (alert: InspectionAlert) => void;
+type CompleteHandler = (message: InspectionCompleteMessage) => void;
 
 class InspectionStreamHub {
   private ws: WebSocket | null = null;
   private frameHandlers = new Set<FrameHandler>();
   private alertHandlers = new Set<AlertHandler>();
+  private completeHandlers = new Set<CompleteHandler>();
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
 
   private ensureConnected() {
@@ -32,9 +37,15 @@ class InspectionStreamHub {
       }
 
       try {
-        const data = JSON.parse(String(event.data)) as InspectionAlert;
+        const data = JSON.parse(String(event.data)) as
+          | InspectionAlert
+          | InspectionCompleteMessage;
         if (data.type === "defect_alert") {
           for (const handler of this.alertHandlers) {
+            handler(data);
+          }
+        } else if (data.type === "inspection_complete") {
+          for (const handler of this.completeHandlers) {
             handler(data);
           }
         }
@@ -45,7 +56,11 @@ class InspectionStreamHub {
 
     ws.onclose = () => {
       this.ws = null;
-      if (this.frameHandlers.size > 0 || this.alertHandlers.size > 0) {
+      if (
+        this.frameHandlers.size > 0 ||
+        this.alertHandlers.size > 0 ||
+        this.completeHandlers.size > 0
+      ) {
         this.scheduleReconnect();
       }
     };
@@ -80,6 +95,14 @@ class InspectionStreamHub {
       this.alertHandlers.delete(handler);
     };
   }
+
+  subscribeComplete(handler: CompleteHandler) {
+    this.completeHandlers.add(handler);
+    this.ensureConnected();
+    return () => {
+      this.completeHandlers.delete(handler);
+    };
+  }
 }
 
 export const inspectionStreamHub = new InspectionStreamHub();
@@ -90,4 +113,8 @@ export function subscribeInspectionAlerts(handler: AlertHandler) {
 
 export function subscribeInspectionFrames(handler: FrameHandler) {
   return inspectionStreamHub.subscribeFrames(handler);
+}
+
+export function subscribeInspectionComplete(handler: CompleteHandler) {
+  return inspectionStreamHub.subscribeComplete(handler);
 }
